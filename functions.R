@@ -182,7 +182,7 @@ plot_line_graph <- function(df, workstream_names) {
 # Define variables for the workstream name and time frame
 Workstream_names <- "Workstream 2 - Community"
 Start_month_year <- "February 2023"
-End_month_year <- "November 2023"
+End_month_year <- "March 2023"
 Health_board_trusts <- NULL
 
 
@@ -252,8 +252,8 @@ clean_and_rename <- function(Workstream_names = NULL, Start_month_year, End_mont
   month_year_cols <-colnames(df)[4:length(colnames(df))]
   
   # Generate the complete sequence of month-years between start and end
-  full_sequence <- seq(as.Date(paste0("01 ", start_month_year), format = "%d %B %Y"),
-                       as.Date(paste0("01 ", end_month_year), format = "%d %B %Y"),
+  full_sequence <- seq(as.Date(paste0("01 ", Start_month_year), format = "%d %B %Y"),
+                       as.Date(paste0("01 ", End_month_year), format = "%d %B %Y"),
                        by = "month")
   full_sequence_formatted <- format(full_sequence, "%B %Y")
   
@@ -281,6 +281,7 @@ clean_and_rename <- function(Workstream_names = NULL, Start_month_year, End_mont
   return(long_df)
 }
 
+loong_df <- clean_and_rename(Workstream_names, Start_month_year, End_month_year, Health_board_trusts)
 
 
 # Function to create run chart in IC guidelines with a loop to make all 18 charts on the basis of unique ID
@@ -305,10 +306,10 @@ create_run_chart_by_id <- function(df, unique_id) {
     ) +
     theme_minimal(base_family = "sans") +
     theme(
-      plot.title = element_text(size = 12, hjust = 0.5, color = "#1B5768"),
+      plot.title = element_text(size = 14, hjust = 0.5, color = "#1B5768"),
       plot.caption = element_text(size = 8, hjust = 1, color = "gray"),
       axis.text.x = element_text(angle = 90, hjust = 1, color = "darkgray"),
-      axis.text.y = element_text(angle = 0, hjust = 1, color = "darkgray"),
+      axis.text.y = element_text(angle = 0, hjust = 1, color = "darkgray", size = 9),
       axis.title.x = element_blank(),  # Remove x-axis label
       axis.title.y = element_blank(),  # Remove y-axis label
       panel.grid = element_blank(),  # Remove gridlines
@@ -320,9 +321,7 @@ create_run_chart_by_id <- function(df, unique_id) {
       axis.ticks.margin = unit(0.2, "cm")  # Adjust the distance between ticks and labels
       
     )
-  
-  
-  return(p)
+    return(p)
 }
 
 

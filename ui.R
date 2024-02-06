@@ -7,7 +7,7 @@ ui <- fluidPage(
   # Create a tabsetPanel to hold the tabs
   tabsetPanel(
     # First tab: Plots and Line
-    tabPanel("Plots and Line",
+    tabPanel("BOX PLOTS",
              sidebarLayout(
                sidebarPanel(
                  pickerInput(
@@ -54,7 +54,7 @@ ui <- fluidPage(
     ),
     
     # Second tab: For future development (no plots yet) 
-    tabPanel("Future Development",
+    tabPanel("LINE CHARTS",
              sidebarLayout(
                sidebarPanel(
                  # Repeat the sidebar UI elements, you can modify these later as needed
