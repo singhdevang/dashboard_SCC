@@ -65,7 +65,7 @@ ui <- fluidPage(
                    selected = "Workstream 1 - Leadership"
                           
                  ),
-                 selectInput(
+                 pickerInput(
                    inputId = "healthBoardTrust2",
                    label = "Choose Health Board/Trust:",
                    choices = c("Aneurin Bevan University Health Board",
@@ -77,8 +77,9 @@ ui <- fluidPage(
                                "Swansea Bay University Health Board",
                                "Velindre NHS Trust",
                                "Welsh Ambulance Service Trust",
-                               "Welsh Blood Service")
-                   
+                               "Welsh Blood Service"),
+                   options = list(`actions-box` = TRUE, `deselect-all-text` = "Unselect", `select-all-text` = "Select all", `none-selected-text` = "None Selected", `dropup-auto` = FALSE),
+                   multiple = TRUE
                  ),
                  selectInput(
                    inputId = "startMonthYear2",
