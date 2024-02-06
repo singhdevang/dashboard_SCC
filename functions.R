@@ -50,8 +50,8 @@ process_data <- function(workstream_names = NULL, start_month_year, end_month_ye
            "October 2023" = "Monthly Progress Score - October 2023 (Due 21/11/23)",
            "November 2023" = "Monthly Progress Score - November 2023 (Due 13th Dec)",
            "December 2023" = "Monthly Progress Score - December 2023 (due 17th January)",
-           "January 2024" = "Monthly Progress Score - January 2024",
-           "February 2024" = "Monthly Progress Score - February 2024") %>% 
+           "January 2024" = "Monthly Progress Score - January 2024 (due 13th Feb 2024)",
+           "February 2024" = "Monthly Progress Score - February 2024 (due 13th march 2024)") %>% 
     # Parse numeric values
     mutate(across(everything(), ~parse_number(.)))
   
@@ -150,7 +150,7 @@ plot_line_graph <- function(df, workstream_names) {
   # Line Graph
   p_line <- ggplot(count_data, aes(x = `Month-Year`, y = Count, group = 1)) +
     geom_line(color = "#4A7986", size = 1) +  # Set bar width and fill color
-    geom_point(color = "#4A7896", size = 3, shape = 21, fill = "white", stroke = 0) +
+    geom_point(color = "#4A7896", size = 3, shape = 21, fill = "white", stroke = 1) +
     scale_x_discrete() +
     scale_y_continuous(breaks = y_breaks, limits = c(0, upper_limit)) +
     labs(
@@ -177,6 +177,152 @@ plot_line_graph <- function(df, workstream_names) {
   
   # Print the line graph
   print(p_line)
+}
+
+# Define variables for the workstream name and time frame
+Workstream_names <- "Workstream 2 - Community"
+Start_month_year <- "February 2023"
+End_month_year <- "November 2023"
+Health_board_trusts <- NULL
+
+
+
+
+# Function to filter,rename,select relevant columns, replace blank cells/ No report received cells with NA and extracting numbers from string
+# Wrote two separate function for data cleaning and manipulation to make it easier for me
+clean_and_rename <- function(Workstream_names = NULL, Start_month_year, End_month_year, Health_board_trusts = NULL) {
+  
+  # Read Excel file
+  df <- read_excel("C:/Users/De122459/OneDrive - NHS Wales/National SCC Project Planning/National SCC project planning.xlsx")
+  
+  # Data cleaning and transformation
+  df <- df %>%
+    # Conditionally filter by 'Workstream' if the argument is not NULL
+    {
+      if(!is.null(Workstream_names)) {
+        filter(., Workstream %in% Workstream_names)
+      } else {
+        .
+      }
+    } %>%
+    # Conditionally filter by 'Health Board / Trust' if the argument is not NULL
+    {
+      if(!is.null(Health_board_trusts)) {
+        filter(., `Health Board / Trust` %in% Health_board_trusts)
+      } else {
+        .
+      }
+    } 
+  
+  
+  
+  df<-df |> rename("February 2023"= "Monthly Progress Score - February 2023 (MSSW only)",
+                   "March 2023" = "Monthly Progress Score - March 2023 (MSSW ONLY)",
+                   "April 2023" = "Monthly Progress Score - April 2023",
+                   "May 2023" = "Monthly Progress Score - May 2023",
+                   "June 2023" = "Monthly Progress Score - June 2023",
+                   "July 2023" = "Monthly Progress Score - July 2023",
+                   "August 2023" = "Monthly Progress Score - August 2023",
+                   "September 2023" = "Monthly Progress Score - September 2023",
+                   "October 2023" = "Monthly Progress Score - October 2023 (Due 21/11/23)",
+                   "November 2023" = "Monthly Progress Score - November 2023 (Due 13th Dec)",
+                   "December 2023" = "Monthly Progress Score - December 2023 (due 17th January)",
+                   "January 2024" = "Monthly Progress Score - January 2024 (due 13th Feb 2024)",
+                   "February 2024" = "Monthly Progress Score - February 2024 (due 13th march 2024)"
+  )
+  
+  
+  
+  
+  
+  #Select the specific fields or ones that have 202 in them, this should pick up future ones as well!
+  df<- df |> select(c("Unique ID", "Health Board / Trust", "Project Title (inline with Monthly Reporting)")| contains("202"))
+  
+  # Replace blank cells and "NO Report received" with NA
+  df[df == "" | df == "NO Report received"] <- NA
+  
+  
+  
+  for (col in colnames(df)[4:length(colnames(df))]) {
+    df[[col]] <- str_extract(df[[col]], "\\d+\\.*\\d*")
+  }
+  
+  
+  
+  month_year_cols <-colnames(df)[4:length(colnames(df))]
+  
+  # Generate the complete sequence of month-years between start and end
+  full_sequence <- seq(as.Date(paste0("01 ", start_month_year), format = "%d %B %Y"),
+                       as.Date(paste0("01 ", end_month_year), format = "%d %B %Y"),
+                       by = "month")
+  full_sequence_formatted <- format(full_sequence, "%B %Y")
+  
+  # Filter the columns that fall within the generated sequence
+  selected_month_cols <- month_year_cols[month_year_cols %in% full_sequence_formatted]
+  
+  # Include other necessary columns
+  id_and_project_cols <- c("Unique ID", "Health Board / Trust", "Project Title (inline with Monthly Reporting)")
+  cols_to_keep <- c(id_and_project_cols, selected_month_cols)
+  
+  # Filter and pivot the data frame to long format
+  long_df <- df %>%
+    select(all_of(cols_to_keep)) %>%
+    pivot_longer(cols = all_of(selected_month_cols),
+                 names_to = "Month-Year",
+                 values_to = "Score",
+                 #keeps the column name even if it is NA
+                 values_drop_na = FALSE) %>% 
+    #make score numeric to include NA values
+    mutate(Score = as.numeric(Score))
+  
+  # Convert 'Month-Year' to an ordered factor based on the full sequence
+  long_df$`Month-Year` <- factor(long_df$`Month-Year`, levels = full_sequence_formatted, ordered = TRUE)
+  
+  return(long_df)
+}
+
+
+
+# Function to create run chart in IC guidelines with a loop to make all 18 charts on the basis of unique ID
+create_run_chart_by_id <- function(df, unique_id) {
+  
+  # Filter long data for the specific unique ID, excluding NA values for Score
+  filtered_data <- filter(df, `Unique ID` == unique_id)
+  
+  # Calculate median, excluding NA
+  # median_score <- median(as.numeric(filtered_data$Score), na.rm = TRUE)
+  
+  # Create the run chart using ggplot2 with specified customizations
+  p <- ggplot(filtered_data, aes(x = `Month-Year`, y = Score, group = unique_id)) + # Median line
+    #geom_line(y = median_score, color = "#D89F3E", size = 1) + 
+    geom_line(color = "#4A7986", size = 1) +  # Solid line for connecting data points
+    geom_point(color = "#4A7986", size = 3, shape = 21, fill = "white", stroke = 1) + # Dot markers
+    scale_x_discrete() +  # Use discrete scale for Month-Year factor
+    scale_y_continuous(breaks = seq(0, 5, by = 0.5), limits = c(0, 5)) +  # Set y-axis breaks and limits
+    labs(
+      title = paste("Line Chart of Monthly Progress Score of", unique_id),
+      caption = "Source: SCC National Planning File"
+    ) +
+    theme_minimal(base_family = "sans") +
+    theme(
+      plot.title = element_text(size = 12, hjust = 0.5, color = "#1B5768"),
+      plot.caption = element_text(size = 8, hjust = 1, color = "gray"),
+      axis.text.x = element_text(angle = 90, hjust = 1, color = "darkgray"),
+      axis.text.y = element_text(angle = 0, hjust = 1, color = "darkgray"),
+      axis.title.x = element_blank(),  # Remove x-axis label
+      axis.title.y = element_blank(),  # Remove y-axis label
+      panel.grid = element_blank(),  # Remove gridlines
+      panel.background = element_rect(fill = "white", colour = NA),
+      plot.caption.position = "plot",
+      axis.line.x = element_line(color = "gray"),  # Add x-axis line
+      axis.ticks.x = element_line(color = "gray"),  # Add x-axis tick marks
+      axis.ticks.length = unit(0.1, "cm"),  # Set the length of the tick marks
+      axis.ticks.margin = unit(0.2, "cm")  # Adjust the distance between ticks and labels
+      
+    )
+  
+  
+  return(p)
 }
 
 
