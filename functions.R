@@ -130,7 +130,7 @@ plot_box_plot <- function(df, workstream_names){
 
 # Define a new function for plotting the bar graph
 plot_line_graph <- function(df, workstream_names) {
-  # Prepare data for Bar Graph
+  # Prepare data for line Graph
   count_data <- df %>%
     group_by(`Month-Year`) %>%
     summarize(Count = sum(!is.na(Score)), .groups = 'drop')  # Use .groups = 'drop' to avoid group_by drop warning
@@ -326,4 +326,95 @@ create_run_chart_by_id <- function(df, unique_id) {
 
 
 
+# Unified function for preprocessing and plotting with dynamic title and automatic pattern prefixing
+plot_scc_sessions <- function(session_type) {
+  # Hard-coded path to the Excel file
+  file_path <- "C:/Users/De122459/OneDrive - NHS Wales/Contact List/SCC Master Distribution List .xlsx"
+  
+  # Automatically prepend '^' to the session_type to match from the start
+  session_pattern <- paste0("^", session_type)
+  
+  # Preprocess and transform the data
+  df <- read_excel(file_path)
+  
+  df1 <- df %>% 
+    select(4, 6, 19:38) %>% 
+    filter(!(Organisation %in% c("Public Health Wales", "IHI", "RSM", "NHS Wales Executive", "Improvement Cymru"))) %>% 
+    mutate(across(3:22, ~ifelse(grepl("^[Yy]", .) | grepl("^[Yy]$", .), "Y", NA)), 
+           `Coaching Call (Jan 2024)` = ifelse(!is.na(`Jan Lead CC`) | !is.na(`Jan CC...20`), "Y", NA),
+           `Learning Session 4 (Nov 2023)` = ifelse(!is.na(`LS4 Day 2`) | !is.na(`LS4 Cl Ex`) | !is.na(`LS4 Day 1 (AB, CTM, HD)`), "Y", NA),
+           `Coaching Call (Oct 2023)` = ifelse(!is.na(`Oct CC`) | !is.na(`Oct Lead CC`), "Y", NA),
+           `Learning Session 3 (Sep 2023)` = ifelse(!is.na(`LS3`) | !is.na(`LS3 Cl Ex`), "Y", NA),
+           `Coaching Call (Aug 2023)` = ifelse(!is.na(`Aug CC`) | !is.na(`Aug Lead CC`), "Y", NA),
+           `Coaching Call (July 2023)` = ifelse(!is.na(`11`) | !is.na(`July Lead CC`), "Y", NA),
+           `Learning Session 2 (Jun 2023)` = `LS2`,
+           `Coaching Call (May 2023)` = `May CC`,
+           `Coaching Call (Apr 2023)` = `Apr CC`,
+           `Learning Session 1.2 (Mar 2023)` = `LS 1.2`,
+           `Coaching Call (Feb 2023)` = `Feb CC`,
+           `Coaching Call (Jan 2023)` = `Jan CC...37`,
+           `Learning Session 1 (Nov 2022)` = `LS 1`) %>%
+    select(-c(`Jan Lead CC`, `Jan CC...20`, `LS4 Day 2`, `LS4 Cl Ex`, `LS4 Day 1 (AB, CTM, HD)`,
+              `Oct CC`, `Oct Lead CC`, `LS3`, `LS3 Cl Ex`, `Aug CC`, `Aug Lead CC`,
+              `11`, `July Lead CC`, `LS2`, `May CC`, `Apr CC`, `LS 1.2`, `Feb CC`, `Jan CC...37`, `LS 1`, `Workstream`, `Organisation`))
+  
+  session_order <- c("Coaching Call (Jan 2024)", "Learning Session 4 (Nov 2023)", "Coaching Call (Oct 2023)",
+                     "Learning Session 3 (Sep 2023)", "Coaching Call (Aug 2023)", "Coaching Call (July 2023)", 
+                     "Learning Session 2 (Jun 2023)", "Coaching Call (May 2023)", "Coaching Call (Apr 2023)", 
+                     "Learning Session 1.2 (Mar 2023)", "Coaching Call (Feb 2023)", "Coaching Call (Jan 2023)", 
+                     "Learning Session 1 (Nov 2022)")
+  
+  
+  
+  
+  session_order <- c("Coaching Call (Jan 2024)", "Learning Session 4 (Nov 2023)", "Coaching Call (Oct 2023)",
+                     "Learning Session 3 (Sep 2023)", "Coaching Call (Aug 2023)", "Coaching Call (July 2023)", 
+                     "Learning Session 2 (Jun 2023)", "Coaching Call (May 2023)", "Coaching Call (Apr 2023)", 
+                     "Learning Session 1.2 (Mar 2023)", "Coaching Call (Feb 2023)", "Coaching Call (Jan 2023)", 
+                     "Learning Session 1 (Nov 2022)")
+  
+  df2 <- df1 %>%
+    pivot_longer(cols = everything(), names_to = "SCC Session", values_to = "value") %>%
+    filter(value == "Y") %>%
+    group_by(`SCC Session`) %>%
+    summarise(count = n()) %>%
+    mutate(`SCC Session` = factor(`SCC Session`, levels = session_order)) %>%
+    arrange(`SCC Session`) %>%
+    mutate(`SCC Session` = fct_rev(`SCC Session`))
+  
+  # Dynamically set the title based on session_type
+  title <- ifelse(session_type == "Coaching Call", "Total attendance at Coaching Calls",
+                  ifelse(session_type == "Learning Session", "Total attendance at Learning Sessions",
+                         "Total Attendance"))
+  
+  # Filter data based on the modified session_pattern for plotting
+  filtered_data <- df2 %>%
+    filter(grepl(session_pattern, `SCC Session`))
+  
+  # Generate plot
+  p <- ggplot(filtered_data, aes(x = `SCC Session`, y = count, group = 1)) +
+    geom_line(color = "#4A7986", size = 1) +
+    geom_point(color = "#4A7986", size = 2, shape = 21, fill = "white", stroke = 1) +
+    scale_y_continuous(breaks = seq(0, max(filtered_data$count, na.rm = TRUE) + 10, by = 10), limits = c(0, max(filtered_data$count, na.rm = TRUE) + 10)) +
+    labs(title = title, caption = "Source: SCC Master Distribution List") +
+    theme_minimal(base_family = "sans") +
+    theme(
+      plot.title = element_text(size = 14, hjust = 0.5, color = "#1B5768"),
+      plot.caption = element_text(size = 8, hjust = 1, color = "gray"),
+      axis.text.x = element_text(angle = 90, color = "gray"),
+      axis.text.y = element_text(color = "darkgray"),
+      axis.title.x = element_blank(),
+      axis.title.y = element_blank(),
+      panel.grid = element_blank(),
+      panel.background = element_rect(fill = "white", colour = NA),
+      plot.caption.position = "plot",
+      axis.line.x = element_line(color = "gray"),  
+      axis.ticks.x = element_line(color = "gray"),  
+      axis.ticks.length = unit(0.1, "cm"),  
+      axis.ticks.margin = unit(0.2, "cm")  
+    )
+  
+  return(p)
+}
 
+plot_scc_sessions("Learning Session")

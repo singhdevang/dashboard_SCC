@@ -56,9 +56,26 @@ server <- function(input, output, session) {
   })
   
   # Render the line plot as a Plotly plot based on the selected unique ID
+  
   output$lineChart <- renderPlotly({
     req(selected_data())  # Ensure that selected_data is not NULL
     p_line2 <- create_run_chart_by_id(selected_data(), input$uniqueId)
     ggplotly(p_line2)  # Convert the ggplot object to a Plotly object
   })
+  
+  # Enagagement
+  engagement <- reactive({
+    plot_scc_sessions(
+      session_type = input$session
+    )
+  })
+  
+  
+  output$linechartt <- renderPlotly({
+    # Directly use the result of the engagement reactive which already calls plot_scc_sessions correctly
+    df <- engagement() # This assumes plot_scc_sessions returns a plot object directly
+    ggplotly(df) # Assuming df is a ggplot object, convert it to Plotly
+  })
+  
+  
 }

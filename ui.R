@@ -109,8 +109,27 @@ ui <- fluidPage(
                 
                )
              )
-    )
+    ),
+    
+          tabPanel("ENGAGEMENT",
+          sidebarLayout(
+          sidebarPanel(
+          selectInput(
+            inputId = "session",
+            label = "Choose your Session",
+            choices = c("Coaching Call", "Learning Session")
+          )
+          ),
+          mainPanel (
+            plotlyOutput(outputId = "linechartt", height = "600px")
+          )
+          
+          )
+                   
+            
+          )
   )
+      
 )
 
 
