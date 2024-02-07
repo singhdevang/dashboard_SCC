@@ -77,5 +77,17 @@ server <- function(input, output, session) {
     ggplotly(df) # Assuming df is a ggplot object, convert it to Plotly
   })
   
+  # PS
+  psych_safety <- reactive({
+    plot_likert(
+      scc_session = input$scc
+    )
+  })
+  
+  output$likertchart <- renderPlotly({
+    # Directly render the ggplot object returned by the reactive expression
+    req(psych_safety())  # Ensure psych_safety is not NULL
+    ggplotly(psych_safety())  # Since psych_safety is expected to return a ggplot object
+  })
   
 }

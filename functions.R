@@ -418,3 +418,54 @@ plot_scc_sessions <- function(session_type) {
 }
 
 plot_scc_sessions("Learning Session")
+
+
+
+
+library(readxl)
+library(tidyverse)
+library(likert)
+
+plot_likert <- function(scc_session) {
+  # Assuming the path and reading of the Excel file works outside this environment
+  df <- read_excel("C:/Users/De122459/OneDrive - NHS Wales/Desktop/Psychological Safety SCC/PSCC.xlsx")
+  
+  df1 <- df |>
+    filter(`SCC Session` == scc_session) |>
+    select(-1) # Assuming this selects the relevant columns after filtering
+  
+  # Mapping responses to numerical values
+  response_mapping <- setNames(1:7, c("Strongly Disagree", "Disagree", "Somewhat Disagree", "Neutral", "Somewhat Agree", "Agree", "Strongly Agree"))
+  df1_numerical <- data.frame(lapply(df1, function(x) response_mapping[as.character(x)]))
+  df1_factors <- data.frame(lapply(df1_numerical, factor, levels = 1:7))
+  levels_labels <- c("Strongly Disagree", "Disagree", "Somewhat Disagree", "Neutral", "Somewhat Agree", "Agree", "Strongly Agree")
+  df1_labeled <- data.frame(lapply(df1_factors, function(x) factor(x, levels = 1:7, labels = levels_labels)))
+  colnames(df1_labeled) <- gsub("\\.", " ", colnames(df1_labeled))
+  likert_data <- likert(df1_labeled)
+  
+  # Define the dynamic title
+  dynamic_title <- sprintf("Psychological Safety Analysis of %s", scc_session)
+  # Define custom colors for the plot
+  custom_colors <- c("#D89F39", "#DFB15F", "#E9C98F", "#BEBEBE", "#81ADB9", "#5E97A6", "#4A7986")
+  
+  
+  # Plot the likert data with customizations
+  p <- plot(likert_data) + 
+    theme_minimal() + # Use a minimal theme as a base
+    labs(title = dynamic_title, x = NULL) + # Set title, remove x-axis title
+    theme(plot.title = element_text(color = "#4A7896", hjust = 0.5, size = 13), # Change title color
+          panel.border = element_blank(), # Remove the box around the plot
+          panel.background = element_blank(), # Make background transparent
+          axis.line = element_blank(),
+          panel.grid = element_blank(),
+          axis.title.x = element_blank()
+    )+
+    scale_fill_manual(values = custom_colors) +
+    guides(fill = guide_legend(title = NULL))
+  
+  return(p) # Display the plot
+}
+
+# Call the function and check the column names
+plot_likert("Learning Session 4")
+

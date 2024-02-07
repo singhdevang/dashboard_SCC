@@ -127,6 +127,22 @@ ui <- fluidPage(
           )
                    
             
+          ),
+          tabPanel("PSYCHOLOGICAL SAFETY",
+          sidebarLayout(
+          sidebarPanel(
+          selectInput(
+          inputId = "scc",
+          label = "Choose your Session",
+          choices = c("Coaching Call (Oct 2023)", "Learning Session 4 (Nov 2023)", "Coaching Call (Jan 2024)" )
+          
+          )
+          ),
+          mainPanel (
+            plotlyOutput(outputId = "likertchart")
+          )
+          )
+            
           )
   )
       
