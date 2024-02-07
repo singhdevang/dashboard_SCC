@@ -1,4 +1,3 @@
-# server.R
 library(shiny)
 library(readxl)
 library(tidyverse)
@@ -6,11 +5,12 @@ library(lubridate)
 library(ggplot2)
 library(plotly)
 
-source('functions.R') # functions are in this script
+# Assuming 'functions.R' includes necessary data processing and plotting functions
+# Make sure to adjust the function calls if necessary
 
 server <- function(input, output, session) {
   
-  # Your existing reactive for processing data for the "Plots and Line" tab
+  # Reactive for processing data for the "BOX PLOTS" tab
   data_reactive <- reactive({
     process_data(
       workstream_names = input$workstreamName, 
@@ -20,23 +20,24 @@ server <- function(input, output, session) {
     )
   })
   
-  # Existing outputs for the "Plots and Line" tab
-  output$linePlot <- renderPlotly({
-    df <- data_reactive()
-    p_line <- plot_line_graph(df, input$workstreamName)
-    ggplotly(p_line)
-  })
-  
+  # Render box plot based on processed data
   output$boxPlot <- renderPlotly({
     df <- data_reactive()
     p_box <- plot_box_plot(df, input$workstreamName)
     ggplotly(p_box)
   })
   
-  # Reactive expression for processed data for the "Future Development" tab
+  # Render line plot based on processed data
+  output$linePlot <- renderPlotly({
+    df <- data_reactive()
+    p_line <- plot_line_graph(df, input$workstreamName)
+    ggplotly(p_line)
+  })
+  
+  # Reactive expression for processed data for the "LINE CHARTS" tab
   processed_data <- reactive({
     clean_and_rename(
-      Workstream_names = input$WorkstreamName,
+      Workstream_names = input$WorkstreamName2,
       Start_month_year = input$startMonthYear2,
       End_month_year = input$endMonthYear2,
       Health_board_trusts = input$healthBoardTrust2
@@ -55,39 +56,40 @@ server <- function(input, output, session) {
     filter(processed_data(), `Unique ID` == input$uniqueId)
   })
   
-  # Render the line plot as a Plotly plot based on the selected unique ID
-  
+  # Render line chart based on the selected unique ID
   output$lineChart <- renderPlotly({
     req(selected_data())  # Ensure that selected_data is not NULL
     p_line2 <- create_run_chart_by_id(selected_data(), input$uniqueId)
     ggplotly(p_line2)  # Convert the ggplot object to a Plotly object
   })
   
-  # Enagagement
+  # Reactive for "ENGAGEMENT" tab
   engagement <- reactive({
     plot_scc_sessions(
       session_type = input$session
     )
   })
   
-  
-  output$linechartt <- renderPlotly({
-    # Directly use the result of the engagement reactive which already calls plot_scc_sessions correctly
-    df <- engagement() # This assumes plot_scc_sessions returns a plot object directly
-    ggplotly(df) # Assuming df is a ggplot object, convert it to Plotly
+  # Render engagement plot
+  output$engagementPlot <- renderPlotly({
+    df <- engagement()
+    ggplotly(df)
   })
   
-  # PS
+  # Reactive for "PSYCHOLOGICAL SAFETY" tab
   psych_safety <- reactive({
     plot_likert(
       scc_session = input$scc
     )
   })
   
-  output$likertchart <- renderPlotly({
-    # Directly render the ggplot object returned by the reactive expression
-    req(psych_safety())  # Ensure psych_safety is not NULL
-    ggplotly(psych_safety())  # Since psych_safety is expected to return a ggplot object
+  # Render psychological safety plot
+  output$likertChart <- renderPlotly({
+    req(psych_safety())
+    ggplotly(psych_safety())
   })
   
 }
+
+
+

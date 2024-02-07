@@ -434,6 +434,8 @@ plot_likert <- function(scc_session) {
     filter(`SCC Session` == scc_session) |>
     select(-1) # Assuming this selects the relevant columns after filtering
   
+  num_responses <- nrow(df1)
+  
   # Mapping responses to numerical values
   response_mapping <- setNames(1:7, c("Strongly Disagree", "Disagree", "Somewhat Disagree", "Neutral", "Somewhat Agree", "Agree", "Strongly Agree"))
   df1_numerical <- data.frame(lapply(df1, function(x) response_mapping[as.character(x)]))
@@ -443,17 +445,17 @@ plot_likert <- function(scc_session) {
   colnames(df1_labeled) <- gsub("\\.", " ", colnames(df1_labeled))
   likert_data <- likert(df1_labeled)
   
-  # Define the dynamic title
-  dynamic_title <- sprintf("Psychological Safety Analysis of %s", scc_session)
+  # Define the dynamic title including the number of responses in brackets
+  dynamic_title <- sprintf("Psychological Safety Analysis of %s [n = %s]", scc_session, num_responses)
+  
   # Define custom colors for the plot
   custom_colors <- c("#D89F39", "#DFB15F", "#E9C98F", "#BEBEBE", "#81ADB9", "#5E97A6", "#4A7986")
-  
   
   # Plot the likert data with customizations
   p <- plot(likert_data) + 
     theme_minimal() + # Use a minimal theme as a base
-    labs(title = dynamic_title, x = NULL) + # Set title, remove x-axis title
-    theme(plot.title = element_text(color = "#4A7896", hjust = 0.5, size = 13), # Change title color
+    labs(title = dynamic_title) + # Set title with the number of responses included
+    theme(plot.title = element_text(color = "#4A7896", hjust = 0.5, size = 13),
           panel.border = element_blank(), # Remove the box around the plot
           panel.background = element_blank(), # Make background transparent
           axis.line = element_blank(),
@@ -466,6 +468,5 @@ plot_likert <- function(scc_session) {
   return(p) # Display the plot
 }
 
-# Call the function and check the column names
-plot_likert("Learning Session 4")
-
+# Call the function with a specific session
+plot_likert("Learning Session 4 (Nov 2023)")
