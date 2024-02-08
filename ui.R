@@ -153,7 +153,7 @@ ui <- navbarPage(theme = shinytheme("flatly"), title = "Safe Care Collaborative 
                                 )
                               ),
                               mainPanel(
-                                plotlyOutput("likertChart")
+                                plotlyOutput("likertChart", height = "600px")
                               )
                             )
                           )

@@ -83,14 +83,19 @@ process_data <- function(workstream_names = NULL, start_month_year, end_month_ye
 }
 loong_df <- process_data(workstream_names, start_month_year, end_month_year, health_board_trusts)
 
-
-
-plot_box_plot <- function(df, workstream_names){
+plot_box_plot <- function(df, workstream_names, health_board_trusts = NULL) {
   # Handle case when no workstream is selected
   if (is.null(workstream_names) || length(workstream_names) == 0) {
     workstream_title <- "ALL Workstreams"
   } else {
     workstream_title <- if(length(workstream_names) > 1) paste(workstream_names, collapse = ", ") else workstream_names
+  }
+  
+  # Handle case when no Health Board/Trust is selected
+  if (is.null(health_board_trusts) || length(health_board_trusts) == 0) {
+    health_board_trust_title <- ""
+  } else {
+    health_board_trust_title <- paste("[", paste(health_board_trusts, collapse = ", "), "]", sep = "")
   }
   
   # Plotting
@@ -99,7 +104,7 @@ plot_box_plot <- function(df, workstream_names){
     scale_x_discrete() +
     scale_y_continuous(breaks = seq(0,5, by = 0.5), limits = c(0,5))+
     labs(
-      title = paste("Box Plot of Monthly Progress Scores for", workstream_title),
+      title = paste("Box Plot of Monthly Progress Scores for", workstream_title, health_board_trust_title),
       subtitle = paste("(", start_month_year, "-", end_month_year, ")"),  
       caption = "Source: SCC National Planning File"
     ) + 
@@ -125,11 +130,11 @@ plot_box_plot <- function(df, workstream_names){
   
   # Print the plot
   print(p)
-  
 }
 
+
 # Define a new function for plotting the bar graph
-plot_line_graph <- function(df, workstream_names) {
+plot_line_graph <- function(df, workstream_names, health_board_trusts = NULL) {
   # Prepare data for line Graph
   count_data <- df %>%
     group_by(`Month-Year`) %>%
@@ -142,6 +147,13 @@ plot_line_graph <- function(df, workstream_names) {
     workstream_title <- if(length(workstream_names) > 1) paste(workstream_names, collapse = ", ") else workstream_names
   }
   
+  # Handle case when no Health Board/Trust is selected
+  if (is.null(health_board_trusts) || length(health_board_trusts) == 0) {
+    health_board_trust_title <- ""
+  } else {
+    health_board_trust_title <- paste("[", paste(health_board_trusts, collapse = ", "), "]", sep = "")
+  }
+  
   # Determine range for y-axis
   max_count <- max(count_data$Count, na.rm = TRUE)
   upper_limit <- ceiling(max_count / 10) * 10  # Round up to the nearest 10
@@ -149,12 +161,12 @@ plot_line_graph <- function(df, workstream_names) {
   
   # Line Graph
   p_line <- ggplot(count_data, aes(x = `Month-Year`, y = Count, group = 1)) +
-    geom_line(color = "#4A7986", size = 1) +  # Set bar width and fill color
-    geom_point(color = "#4A7896", size = 3, shape = 21, fill = "white", stroke = 1) +
+    geom_line(color = "#4A7986", size = 0.7) +  # Set bar width and fill color
+    geom_point(color = "#4A7896", size = 2, shape = 21, fill = "white", stroke = 0.3) +
     scale_x_discrete() +
     scale_y_continuous(breaks = y_breaks, limits = c(0, upper_limit)) +
     labs(
-      title = paste("Number of Progress Scores Received per Month by", workstream_title),
+      title = paste("Number of Progress Scores Received per Month by", workstream_title, health_board_trust_title),
       subtitle = paste("(", start_month_year, "-", end_month_year, ")"),
       caption = "Source: SCC National Planning File"
     ) +
@@ -178,6 +190,7 @@ plot_line_graph <- function(df, workstream_names) {
   # Print the line graph
   print(p_line)
 }
+
 
 # Define variables for the workstream name and time frame
 Workstream_names <- "Workstream 2 - Community"
@@ -296,8 +309,8 @@ create_run_chart_by_id <- function(df, unique_id) {
   # Create the run chart using ggplot2 with specified customizations
   p <- ggplot(filtered_data, aes(x = `Month-Year`, y = Score, group = unique_id)) + # Median line
     #geom_line(y = median_score, color = "#D89F3E", size = 1) + 
-    geom_line(color = "#4A7986", size = 1) +  # Solid line for connecting data points
-    geom_point(color = "#4A7986", size = 3, shape = 21, fill = "white", stroke = 1) + # Dot markers
+    geom_line(color = "#4A7986", size = 0.7) +  # Solid line for connecting data points
+    geom_point(color = "#4A7986", size = 2, shape = 21, fill = "white", stroke = 0.3) + # Dot markers
     scale_x_discrete() +  # Use discrete scale for Month-Year factor
     scale_y_continuous(breaks = seq(0, 5, by = 0.5), limits = c(0, 5)) +  # Set y-axis breaks and limits
     labs(
@@ -364,15 +377,7 @@ plot_scc_sessions <- function(session_type) {
                      "Learning Session 1.2 (Mar 2023)", "Coaching Call (Feb 2023)", "Coaching Call (Jan 2023)", 
                      "Learning Session 1 (Nov 2022)")
   
-  
-  
-  
-  session_order <- c("Coaching Call (Jan 2024)", "Learning Session 4 (Nov 2023)", "Coaching Call (Oct 2023)",
-                     "Learning Session 3 (Sep 2023)", "Coaching Call (Aug 2023)", "Coaching Call (July 2023)", 
-                     "Learning Session 2 (Jun 2023)", "Coaching Call (May 2023)", "Coaching Call (Apr 2023)", 
-                     "Learning Session 1.2 (Mar 2023)", "Coaching Call (Feb 2023)", "Coaching Call (Jan 2023)", 
-                     "Learning Session 1 (Nov 2022)")
-  
+
   df2 <- df1 %>%
     pivot_longer(cols = everything(), names_to = "SCC Session", values_to = "value") %>%
     filter(value == "Y") %>%
@@ -384,7 +389,7 @@ plot_scc_sessions <- function(session_type) {
   
   # Dynamically set the title based on session_type
   title <- ifelse(session_type == "Coaching Call", "Total attendance at Coaching Calls",
-                  ifelse(session_type == "Learning Session", "Total attendance at Learning Sessions",
+                  ifelse(session_type == "Learning Session", "Total Attendance at Learning Sessions",
                          "Total Attendance"))
   
   # Filter data based on the modified session_pattern for plotting
@@ -393,8 +398,8 @@ plot_scc_sessions <- function(session_type) {
   
   # Generate plot
   p <- ggplot(filtered_data, aes(x = `SCC Session`, y = count, group = 1)) +
-    geom_line(color = "#4A7986", size = 1) +
-    geom_point(color = "#4A7986", size = 2, shape = 21, fill = "white", stroke = 1) +
+    geom_line(color = "#4A7986", size = 0.7) +
+    geom_point(color = "#4A7986", size = 2, shape = 21, fill = "white", stroke = 0.3) +
     scale_y_continuous(breaks = seq(0, max(filtered_data$count, na.rm = TRUE) + 10, by = 10), limits = c(0, max(filtered_data$count, na.rm = TRUE) + 10)) +
     labs(title = title, caption = "Source: SCC Master Distribution List") +
     theme_minimal(base_family = "sans") +
@@ -453,7 +458,7 @@ plot_likert <- function(scc_session) {
   
   # Plot the likert data with customizations
   p <- plot(likert_data) + 
-    theme_minimal() + # Use a minimal theme as a base
+    theme_minimal(base_family = "sans") + # Use a minimal theme as a base
     labs(title = dynamic_title) + # Set title with the number of responses included
     theme(plot.title = element_text(color = "#4A7896", hjust = 0.5, size = 13),
           panel.border = element_blank(), # Remove the box around the plot
@@ -470,3 +475,4 @@ plot_likert <- function(scc_session) {
 
 # Call the function with a specific session
 plot_likert("Learning Session 4 (Nov 2023)")
+

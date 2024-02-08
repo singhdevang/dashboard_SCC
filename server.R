@@ -4,13 +4,13 @@ library(tidyverse)
 library(lubridate)
 library(ggplot2)
 library(plotly)
+library(likert)
 
 # Assuming 'functions.R' includes necessary data processing and plotting functions
 # Make sure to adjust the function calls if necessary
-
 server <- function(input, output, session) {
   
-  # Reactive for processing data for the "BOX PLOTS" tab
+  # Existing data reactive remains unchanged
   data_reactive <- reactive({
     process_data(
       workstream_names = input$workstreamName, 
@@ -20,17 +20,19 @@ server <- function(input, output, session) {
     )
   })
   
-  # Render box plot based on processed data
+  # Updated renderPlotly for Box Plot to include health_board_trusts
   output$boxPlot <- renderPlotly({
     df <- data_reactive()
-    p_box <- plot_box_plot(df, input$workstreamName)
+    # Now passing health_board_trusts to the plotting function
+    p_box <- plot_box_plot(df, input$workstreamName, input$healthBoardTrust)
     ggplotly(p_box)
   })
   
-  # Render line plot based on processed data
+  # Updated renderPlotly for Line Plot to include health_board_trusts
   output$linePlot <- renderPlotly({
     df <- data_reactive()
-    p_line <- plot_line_graph(df, input$workstreamName)
+    # Now passing health_board_trusts to the plotting function
+    p_line <- plot_line_graph(df, input$workstreamName, input$healthBoardTrust)
     ggplotly(p_line)
   })
   
