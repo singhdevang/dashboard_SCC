@@ -6,13 +6,15 @@ library(ggplot2)
 library(plotly)
 library(likert)
 
+
+source('coherent.R')
 # Assuming 'functions.R' includes necessary data processing and plotting functions
 # Make sure to adjust the function calls if necessary
 server <- function(input, output, session) {
   
   # Existing data reactive remains unchanged
   data_reactive <- reactive({
-    process_data(
+    process_and_clean_data(
       workstream_names = input$workstreamName, 
       start_month_year = input$startMonthYear,
       end_month_year = input$endMonthYear,
@@ -38,11 +40,11 @@ server <- function(input, output, session) {
   
   # Reactive expression for processed data for the "LINE CHARTS" tab
   processed_data <- reactive({
-    clean_and_rename(
-      Workstream_names = input$WorkstreamName2,
-      Start_month_year = input$startMonthYear2,
-      End_month_year = input$endMonthYear2,
-      Health_board_trusts = input$healthBoardTrust2
+    process_and_clean_data(
+      workstream_names = input$WorkstreamName2,
+      start_month_year = input$startMonthYear2,
+      end_month_year = input$endMonthYear2,
+      health_board_trusts = input$healthBoardTrust2
     )
   })
   
@@ -61,7 +63,7 @@ server <- function(input, output, session) {
   # Render line chart based on the selected unique ID
   output$lineChart <- renderPlotly({
     req(selected_data())  # Ensure that selected_data is not NULL
-    p_line2 <- create_run_chart_by_id(selected_data(), input$uniqueId)
+    p_line2 <- create_line_chart_by_id(selected_data(), input$uniqueId)
     ggplotly(p_line2)  # Convert the ggplot object to a Plotly object
   })
   
@@ -92,6 +94,5 @@ server <- function(input, output, session) {
   })
   
 }
-
 
 
