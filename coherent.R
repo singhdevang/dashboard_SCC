@@ -142,7 +142,7 @@ plot_box_plot <- function(df, workstream_names, health_board_trusts = NULL) {
 
 
 # Define a new function for plotting the line graph
-plot_line_graph <- function(df, workstream_names, health_board_trusts = NULL) {
+  plot_line_graph <- function(df, workstream_names, health_board_trusts = NULL) {
   # Prepare data for line Graph
   count_data <- df %>%
     group_by(`Month-Year`) %>%
