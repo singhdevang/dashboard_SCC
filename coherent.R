@@ -199,7 +199,7 @@ plot_line_graph <- function(df, workstream_names, health_board_trusts = NULL) {
   print(p_line)
 }
 
-# Function to create run chart in IC guidelines with a loop to make all 18 charts on the basis of unique ID
+# Function to create line chart in IC guidelines 
 create_line_chart_by_id <- function(df, unique_id) {
   
   # Filter long data for the specific unique ID, excluding NA values for Score
